@@ -3,7 +3,7 @@
 Welcome to the internal ML competition! 
 
 ### Useful Links
-- **Leaderboard:** [INSERT YOUR GITHUB PAGES URL HERE]
+- **Leaderboard:** https://siyaagarwal2005.github.io/pima-diabetes-ml-challenge/
 - **Submission Rules:** [See docs/submission_guide.md](docs/submission_guide.md)
 
 ### Data Description
