@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ML Leaderboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+</head>
+<body>
+    <h1>Pima Diabetes Challenge Leaderboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>F1 Score (Weighted)</th>
+                <th>Last Update</th>
+            </tr>
+        </thead>
+        <tbody id="leader-body"></tbody>
+    </table>
+    <script>
+        fetch('leaderboard.json').then(res => res.json()).then(data => {
+            const body = document.getElementById('leader-body');
+            data.forEach((row, i) => {
+                body.innerHTML += `<tr><td>${i+1}</td><td>${row.team}</td><td>${row.score}</td><td>${row.time}</td></tr>`;
+            });
+        });
+    </script>
+</body>
+</html>

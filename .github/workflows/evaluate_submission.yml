@@ -1,0 +1,42 @@
+name: Evaluate Submission
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+    paths: ['submissions/*.csv']
+
+jobs:
+  evaluate:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install pandas scikit-learn
+
+      - name: Create secret file
+        run: echo "${{ secrets.TEST_LABELS_CSV }}" > test_labels.csv
+
+      - name: Run Evaluation
+        id: eval
+        run: |
+          # Get the name of the changed CSV file in the submissions folder
+          SUB_FILE=$(ls submissions/*.csv | head -n 1)
+          TEAM_NAME="${{ github.event.pull_request.user.login }}"
+          SCORE_RAW=$(python scripts/evaluate.py test_labels.csv $SUB_FILE)
+          SCORE=$(echo $SCORE_RAW | grep -oP 'SCORE:\K[0-9.]+')
+          python scripts/update_leaderboard.py "$TEAM_NAME" "$SCORE"
+
+      - name: Commit and Push Leaderboard
+        run: |
+          git config --global user.name "CompetitionBot"
+          git config --global user.email "bot@github.com"
+          git add leaderboard.json
+          git commit -m "Update leaderboard for ${{ github.event.pull_request.user.login }}"
+          git push
