@@ -14,5 +14,5 @@ test_features = pd.read_csv('data/test_features.csv')
 preds = model.predict(test_features)
 
 # Save the submission file
-pd.DataFrame({'Outcome': preds}).to_csv('submissions/baseline_sub.csv', index=False)
+pd.DataFrame({'Outcome': preds}).to_csv('submissions/Test_submission.csv', index=False)
 print("Baseline created in submissions/baseline_sub.csv")
