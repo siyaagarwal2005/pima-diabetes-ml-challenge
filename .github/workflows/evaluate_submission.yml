@@ -1,17 +1,22 @@
 name: Evaluate Submission
+
 on:
   pull_request:
     types: [closed]
     branches: [main]
     paths: ['submissions/*.csv']
 
+permissions:
+  contents: write  # Crucial: Allows the bot to push leaderboard updates
+
 jobs:
   evaluate:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -26,11 +31,20 @@ jobs:
       - name: Run Evaluation
         id: eval
         run: |
-          # Get the name of the changed CSV file in the submissions folder
-          SUB_FILE=$(ls submissions/*.csv | head -n 1)
+          # 1. Identify the submission file (ignores the baseline file)
+          SUB_FILE=$(ls submissions/*.csv | grep -v "baseline_sub.csv" | head -n 1)
+          echo "Evaluating submission: $SUB_FILE"
+          
+          # 2. Set the Team Name as the GitHub username of the submitter
           TEAM_NAME="${{ github.event.pull_request.user.login }}"
-          SCORE_RAW=$(python scripts/evaluate.py test_labels.csv $SUB_FILE)
+          
+          # 3. Run the scoring script
+          SCORE_RAW=$(python scripts/evaluate.py test_labels.csv "$SUB_FILE")
+          
+          # 4. Extract the numeric score from the output string "SCORE:0.XXX"
           SCORE=$(echo $SCORE_RAW | grep -oP 'SCORE:\K[0-9.]+')
+          
+          # 5. Update the JSON database
           python scripts/update_leaderboard.py "$TEAM_NAME" "$SCORE"
 
       - name: Commit and Push Leaderboard
@@ -38,5 +52,6 @@ jobs:
           git config --global user.name "CompetitionBot"
           git config --global user.email "bot@github.com"
           git add leaderboard.json
-          git commit -m "Update leaderboard for ${{ github.event.pull_request.user.login }}"
+          # We use || true so the action doesn't fail if there are no changes to the JSON
+          git commit -m "Update leaderboard for ${{ github.event.pull_request.user.login }}" || true
           git push
